@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indian Railway System — Database Project</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #111827;
+    --bg3: #1a2235;
+    --border: #1e3a5f;
+    --accent: #f97316;
+    --accent2: #3b82f6;
+    --accent3: #10b981;
+    --accent4: #8b5cf6;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --danger: #ef4444;
+    --warn: #eab308;
+    --rail-gold: #d4a017;
+    --rail-green: #138808;
+    --rail-saffron: #FF9933;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0a0e1a 0%, #0f1e35 50%, #0a0e1a 100%);
+    border-bottom: 2px solid var(--rail-saffron);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 24px;
+  }
+
+  .logo { display: flex; flex-direction: column; line-height: 1; }
+  .logo-main {
+    font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700;
+    background: linear-gradient(90deg, var(--rail-saffron), var(--rail-gold), #ffffff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px;
+  }
+  .logo-sub { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 3px; text-transform: uppercase; }
+  .tricolor-bar { height: 4px; background: linear-gradient(90deg, var(--rail-saffron) 33.3%, #ffffff 33.3% 66.6%, var(--rail-green) 66.6%); width: 100%; }
+  .header-stats { margin-left: auto; display: flex; gap: 20px; }
+  .stat-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text3); }
+  .stat-chip span:first-child { font-size: 16px; font-weight: 600; color: var(--accent); font-family: 'Rajdhani', sans-serif; }
+
+  /* NAV */
+  .nav { display: flex; gap: 2px; padding: 0 24px; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .nav-btn { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 1px; padding: 10px 18px; background: none; border: none; color: var(--text3); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; text-transform: uppercase; }
+  .nav-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* LAYOUT */
+  .main { display: flex; height: calc(100vh - 110px); }
+  .sidebar { width: 220px; background: var(--bg2); border-right: 1px solid var(--border); overflow-y: auto; flex-shrink: 0; transition: width 0.3s; }
+  .content { flex: 1; overflow-y: auto; padding: 20px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ZONE SIDEBAR */
+  .zone-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 2px; padding: 14px 14px 4px; text-transform: uppercase; }
+  .zone-item { padding: 8px 14px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 8px; }
+  .zone-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+  .zone-item.active { border-left-color: var(--accent); color: var(--accent); background: rgba(249,115,22,0.07); }
+  .zone-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* CARDS & TABLES */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .card-title { font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 1px; color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; }
+  .tbl-wrap { overflow-x: auto; border-radius: 6px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th { background: var(--bg3); padding: 10px 12px; text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid rgba(30,58,95,0.5); transition: background 0.12s; }
+  tbody tr:hover { background: rgba(59,130,246,0.06); }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 9px 12px; color: var(--text2); vertical-align: middle; }
+  td:first-child { color: var(--text); font-weight: 500; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.5px; }
+
+  /* FORMS & BUTTONS */
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+  .form-group input, .form-group select, .form-group textarea { background: var(--bg3); border: 1px solid var(--border); border-radius: 5px; color: var(--text); padding: 8px 10px; font-size: 13px; font-family: 'Noto Sans', sans-serif; transition: border-color 0.2s; width: 100%; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--accent2); }
+  select option { background: var(--bg3); }
+  .btn { font-family: 'Rajdhani', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 1px; padding: 9px 20px; border: none; border-radius: 5px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #ea6c0c; transform: translateY(-1px); }
+  .btn-secondary { background: var(--accent2); color: #fff; }
+  .btn-secondary:hover { background: #2563eb; }
+  .btn-success { background: var(--accent3); color: #fff; }
+  .btn-success:hover { background: #059669; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #dc2626; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* SEARCH BAR & TICKETS */
+  .search-bar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; }
+  .search-bar input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 5px; color: var(--text); padding: 9px 14px; font-size: 13px; font-family: 'Noto Sans', sans-serif; }
+  .search-bar input:focus { outline: none; border-color: var(--accent2); }
+  .ticket { background: linear-gradient(135deg, #0f1e35, #1a2a45); border: 1px solid var(--rail-gold); border-radius: 10px; padding: 20px; margin-bottom: 12px; position: relative; overflow: hidden; }
+  .ticket::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 6px; background: linear-gradient(180deg, var(--rail-saffron), var(--rail-gold), var(--rail-green)); }
+  .ticket-header { display: flex; justify-content: space-between; align-items: flex-start; padding-left: 14px; margin-bottom: 12px; }
+  .ticket-train { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; color: var(--rail-gold); }
+  .ticket-id { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text3); }
+  .ticket-route { display: flex; align-items: center; gap: 10px; padding-left: 14px; margin-bottom: 10px; }
+  .ticket-station { font-weight: 600; font-size: 15px; }
+  .ticket-arrow { color: var(--accent); font-size: 18px; }
+  .ticket-details { display: flex; gap: 20px; padding-left: 14px; flex-wrap: wrap; }
+  .ticket-detail { display: flex; flex-direction: column; gap: 2px; }
+  .ticket-detail span:first-child { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+  .ticket-detail span:last-child { font-weight: 600; color: var(--text); }
+
+  /* TABS & TOAST */
+  .tabs { display: flex; gap: 2px; margin-bottom: 16px; }
+  .tab-btn { font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; padding: 7px 16px; background: var(--bg3); border: 1px solid var(--border); color: var(--text3); cursor: pointer; border-radius: 4px; transition: all 0.15s; text-transform: uppercase; }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  #toast { position: fixed; bottom: 30px; right: 30px; background: var(--accent3); color: #fff; padding: 12px 20px; border-radius: 6px; font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600; z-index: 999; opacity: 0; transform: translateY(20px); transition: all 0.3s; pointer-events: none; }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.error { background: var(--danger); }
+
+  /* LOADING */
+  #loading { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+  .loader-train { font-family: 'Rajdhani', sans-serif; font-size: 36px; font-weight: 700; background: linear-gradient(90deg, var(--rail-saffron), var(--rail-gold), #fff, var(--rail-green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .loader-track { width: 300px; height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+  .loader-fill { height: 100%; background: linear-gradient(90deg, var(--rail-saffron), var(--rail-green)); border-radius: 2px; animation: load 2s ease-in-out infinite; }
+  @keyframes load { 0% { width: 0; margin-left: 0; } 50% { width: 100%; margin-left: 0; } 100% { width: 100%; margin-left: 100%; } }
+  .loader-msg { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text3); letter-spacing: 2px; }
+
+  /* DASHBOARD KPI */
+  .overview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; display: flex; flex-direction: column; gap: 4px; }
+  .kpi-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--text3); text-transform: uppercase; }
+  .kpi-value { font-family: 'Rajdhani', sans-serif; font-size: 32px; font-weight: 700; line-height: 1; }
+  .kpi-sub { font-size: 11px; color: var(--text3); }
+
+  /* SQL CONSOLE */
+  .sql-editor { background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #e6edf3; width: 100%; min-height: 100px; resize: vertical; line-height: 1.6; }
+  .sql-editor:focus { outline: none; border-color: var(--accent2); }
+  .sql-result { background: #0d1117; border: 1px solid var(--border); border-radius: 6px; padding: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--accent3); min-height: 60px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+
+  @media (max-width: 768px) { .sidebar { width: 0; overflow: hidden; } .main { flex-direction: column; } .header-stats { display: none; } }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="loader-train">🚂 INDIAN RAILWAYS</div>
+  <div class="loader-track"><div class="loader-fill"></div></div>
+  <div class="loader-msg">CONNECTING TO FLASK BACKEND...</div>
+</div>
+
+<div id="app" style="display:none">
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-main">🚆 INDIAN RAILWAYS</div>
+      <div class="logo-sub">Database Management System</div>
+    </div>
+    <div class="header-stats" id="headerStats"></div>
+  </div>
+  <div class="tricolor-bar"></div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showPanel('dashboard')">Dashboard</button>
+  <button class="nav-btn" onclick="showPanel('zones')">Zones & Stations</button>
+  <button class="nav-btn" onclick="showPanel('trains')">Trains</button>
+  <button class="nav-btn" onclick="showPanel('tracks')">Track Network</button>
+  <button class="nav-btn" onclick="showPanel('schedules')">Schedules</button>
+  <button class="nav-btn" onclick="showPanel('booking')">Book Ticket</button>
+  <button class="nav-btn" onclick="showPanel('bookings')">My Bookings</button>
+  <button class="nav-btn" onclick="showPanel('search')">Train Search</button>
+  <button class="nav-btn" onclick="showPanel('sql')">SQL Console</button>
+</div>
+
+<div class="main">
+  <div class="sidebar" id="sidebar">
+    <div class="zone-label">Zones</div>
+    <div id="zoneList"></div>
+  </div>
+
+  <div class="content">
+
+    <div class="panel active" id="panel-dashboard">
+      <div class="overview-grid" id="kpiGrid"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card">
+          <div class="card-title">🗺 Zone Summary</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Zone</th><th>HQ</th><th>Stations</th><th>Trains</th></tr></thead>
+              <tbody id="zoneSummaryTbl"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">🚄 Express Trains Today</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Train No</th><th>Name</th><th>Zone</th><th>Type</th></tr></thead>
+              <tbody id="expressTbl"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-zones">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('zones','zone-list')">All Zones</button>
+        <button class="tab-btn" onclick="showTab('zones','station-list')">Stations</button>
+        <button class="tab-btn" onclick="showTab('zones','add-station')">Add Station</button>
+      </div>
+      <div class="tab-panel active" id="tab-zones-zone-list">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Code</th><th>Zone Name</th><th>Headquarters</th><th>Abbr</th><th>Stations</th><th>Trains</th></tr></thead>
+            <tbody id="allZonesTbl"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-zones-station-list">
+        <div class="search-bar">
+          <input type="text" id="stationSearch" placeholder="Search station by name or code…" oninput="filterStations()">
+          <select id="zoneFilter" onchange="filterStations()"><option value="">All Zones</option></select>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Code</th><th>Station Name</th><th>State</th><th>Zone</th><th>Category</th></tr></thead>
+            <tbody id="stationsTbl"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-zones-add-station">
+        <div class="card">
+          <div class="card-title">➕ Add New Station</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Station Code</label><input id="ns_code" placeholder="e.g. NDLS" maxlength="6"></div>
+            <div class="form-group"><label>Station Name</label><input id="ns_name" placeholder="New Delhi"></div>
+            <div class="form-group"><label>State</label><input id="ns_state" placeholder="Delhi"></div>
+            <div class="form-group"><label>Zone</label><select id="ns_zone"></select></div>
+            <div class="form-group"><label>Category</label>
+              <select id="ns_cat">
+                <option>NSG-1</option><option>NSG-2</option><option>NSG-3</option>
+                <option>NSG-4</option><option>NSG-5</option><option>NSG-6</option>
+                <option>Halt</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="addStation()">Add Station</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-trains">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('trains','train-list')">All Trains</button>
+        <button class="tab-btn" onclick="showTab('trains','by-zone')">By Zone</button>
+        <button class="tab-btn" onclick="showTab('trains','add-train')">Add Train</button>
+      </div>
+      <div class="tab-panel active" id="tab-trains-train-list">
+        <div class="search-bar"><input type="text" id="trainSearch" placeholder="Search by train number or name…" oninput="filterTrains()"></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Train No</th><th>Name</th><th>Zone</th><th>Type</th><th>Coaches</th><th>Origin</th><th>Destination</th></tr></thead>
+            <tbody id="trainsTbl"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-trains-by-zone">
+        <div class="form-group" style="max-width:300px;margin-bottom:14px">
+          <label>Select Zone</label><select id="trainZoneSelect" onchange="loadTrainsByZone()"></select>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Train No</th><th>Name</th><th>Type</th><th>Coaches</th><th>Origin → Destination</th></tr></thead>
+            <tbody id="trainsByZoneTbl"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-trains-add-train">
+        <div class="card">
+          <div class="card-title">➕ Add New Train</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Train Number</label><input id="nt_no" placeholder="12001" type="number"></div>
+            <div class="form-group"><label>Train Name</label><input id="nt_name" placeholder="Shatabdi Express"></div>
+            <div class="form-group"><label>Zone</label><select id="nt_zone"></select></div>
+            <div class="form-group"><label>Train Type</label>
+              <select id="nt_type">
+                <option>Rajdhani Express</option><option>Shatabdi Express</option>
+                <option>Vande Bharat Express</option><option>Duronto Express</option>
+                <option>Garib Rath Express</option><option>Jan Shatabdi Express</option>
+                <option>Superfast Express</option><option>Express</option>
+                <option>Mail</option><option>Passenger</option><option>MEMU</option>
+                <option>EMU Local</option><option>Humsafar Express</option>
+                <option>Tejas Express</option><option>Antyodaya Express</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Total Coaches</label><input id="nt_coaches" type="number" value="24"></div>
+            <div class="form-group"><label>Origin Station Code</label><input id="nt_origin" placeholder="NDLS"></div>
+            <div class="form-group"><label>Destination Station Code</label><input id="nt_dest" placeholder="CSMT"></div>
+          </div>
+          <button class="btn btn-primary" onclick="addTrain()">Add Train</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-tracks">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('tracks','track-list')">Track List</button>
+        <button class="tab-btn" onclick="showTab('tracks','add-track')">Add Track</button>
+      </div>
+      <div class="tab-panel active" id="tab-tracks-track-list">
+        <div class="search-bar"><input type="text" id="trackSearch" placeholder="Search tracks…" oninput="filterTracks()"></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>From Station</th><th>To Station</th><th>Distance (km)</th><th>Line Type</th><th>Electrified</th></tr></thead>
+            <tbody id="tracksTbl"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-tracks-add-track">
+        <div class="card">
+          <div class="card-title">➕ Add Track Segment</div>
+          <div class="form-grid">
+            <div class="form-group"><label>From Station</label><select id="trk_from"></select></div>
+            <div class="form-group"><label>To Station</label><select id="trk_to"></select></div>
+            <div class="form-group"><label>Distance (km)</label><input id="trk_dist" type="number" placeholder="250"></div>
+            <div class="form-group"><label>Line Type</label><select id="trk_line"><option>Double Line</option><option>Single Line</option><option>Multiple Line</option></select></div>
+            <div class="form-group"><label>Electrified</label><select id="trk_elec"><option value="1">Yes</option><option value="0">No</option></select></div>
+          </div>
+          <button class="btn btn-primary" onclick="addTrack()">Add Track</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-schedules">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('sched','view-sched')">View Schedule</button>
+        <button class="tab-btn" onclick="showTab('sched','add-stop')">Add Stop</button>
+      </div>
+      <div class="tab-panel active" id="tab-sched-view-sched">
+        <div class="form-group" style="max-width:300px;margin-bottom:14px">
+          <label>Select Train</label><select id="schedTrainSelect" onchange="loadSchedule()"></select>
+        </div>
+        <div id="scheduleDisplay"></div>
+      </div>
+      <div class="tab-panel" id="tab-sched-add-stop">
+        <div class="card">
+          <div class="card-title">➕ Add Schedule Stop</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Train</label><select id="stop_train"></select></div>
+            <div class="form-group"><label>Station</label><select id="stop_station"></select></div>
+            <div class="form-group"><label>Sequence No</label><input id="stop_seq" type="number" placeholder="1"></div>
+            <div class="form-group"><label>Arrival Time</label><input id="stop_arr" type="time"></div>
+            <div class="form-group"><label>Departure Time</label><input id="stop_dep" type="time"></div>
+            <div class="form-group"><label>Day (1=same day)</label><input id="stop_day" type="number" value="1" min="1" max="5"></div>
+            <div class="form-group"><label>Halt Minutes</label><input id="stop_halt" type="number" value="0" min="0"></div>
+          </div>
+          <button class="btn btn-primary" onclick="addStop()">Add Stop</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-booking">
+      <div class="card" style="max-width:700px;margin:0 auto">
+        <div class="card-title">🎫 Book Railway Ticket</div>
+        <div class="form-grid">
+          <div class="form-group"><label>From Station</label><select id="bk_from"></select></div>
+          <div class="form-group"><label>To Station</label><select id="bk_to"></select></div>
+          <div class="form-group"><label>Journey Date</label><input id="bk_date" type="date"></div>
+          <div class="form-group"><label>Train</label><select id="bk_train"><option value="">— Select route first —</option></select></div>
+          <div class="form-group"><label>Coach Class</label>
+            <select id="bk_coach"><option>1A</option><option>2A</option><option>3A</option><option>SL</option><option>CC</option><option>EC</option><option>2S</option><option>GEN</option></select>
+          </div>
+          <div class="form-group"><label>Seat Number</label><input id="bk_seat" type="number" min="1" max="72" placeholder="e.g. 32"></div>
+          <div class="form-group" style="grid-column:1/-1"><label>Passenger Full Name</label><input id="bk_name" placeholder="Enter full name as per ID"></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="searchTrainsForRoute()">🔍 Find Trains</button>
+          <button class="btn btn-success" onclick="bookTicket()">🎫 Confirm Booking</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-bookings">
+      <div class="search-bar">
+        <input type="text" id="bookingSearch" placeholder="Search by PNR, name, train…" oninput="filterBookings()">
+        <button class="btn btn-danger btn-ghost" onclick="clearAllBookings()">Clear All</button>
+      </div>
+      <div id="bookingsList"></div>
+    </div>
+
+    <div class="panel" id="panel-search">
+      <div class="card" style="max-width:600px;margin:0 auto 20px">
+        <div class="card-title">🔍 Search Trains Between Stations</div>
+        <div class="form-grid">
+          <div class="form-group"><label>From Station</label><select id="sr_from"></select></div>
+          <div class="form-group"><label>To Station</label><select id="sr_to"></select></div>
+        </div>
+        <button class="btn btn-secondary" onclick="searchTrains()">Search</button>
+      </div>
+      <div id="searchResults"></div>
+    </div>
+
+    <div class="panel" id="panel-sql">
+      <div class="card">
+        <div class="card-title">💻 SQL Console</div>
+        <div class="form-group" style="margin-bottom:10px"><label>Query</label><textarea class="sql-editor" id="sqlInput" rows="5" placeholder="SELECT * FROM trains LIMIT 10;"></textarea></div>
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="runSQL()">▶ Execute</button>
+          <button class="btn btn-ghost" onclick="sqlPreset('SELECT * FROM zones;')">Zones</button>
+          <button class="btn btn-ghost" onclick="sqlPreset('SELECT * FROM stations LIMIT 20;')">Stations</button>
+          <button class="btn btn-ghost" onclick="sqlPreset('SELECT * FROM trains LIMIT 20;')">Trains</button>
+          <button class="btn btn-ghost" onclick="sqlPreset('SELECT * FROM tracks LIMIT 20;')">Tracks</button>
+          <button class="btn btn-ghost" onclick="sqlPreset('SELECT * FROM schedule LIMIT 30;')">Schedule</button>
+          <button class="btn btn-ghost" onclick="sqlPreset('SELECT * FROM bookings;')">Bookings</button>
+          <button class="btn btn-ghost" onclick="sqlPreset('SELECT t.train_no, t.name, COUNT(s.id) as stops FROM trains t LEFT JOIN schedule s ON t.id=s.train_id GROUP BY t.id LIMIT 20;')">Train Stops</button>
+        </div>
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px">OUTPUT</label>
+        <div class="sql-result" id="sqlOutput">Ready. Enter a SQL query above.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 Schema Reference</div>
+        <div class="sql-result" style="color:var(--text2)">TABLES:
+  zones(id, code, name, headquarters, abbreviation)
+  stations(id, code, name, state, zone_id, category)
+  trains(id, train_no, name, zone_id, train_type, total_coaches, origin_code, destination_code)
+  tracks(id, station_from_id, station_to_id, distance_km, line_type, electrified)
+  schedule(id, train_id, station_id, sequence_no, arrival_time, departure_time, day_no, halt_minutes)
+  bookings(id, pnr, train_id, journey_date, from_station_id, to_station_id, coach, seat_no, passenger_name, booked_at)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ==================== FLASK API HELPERS ====================
+async function query(sql, params=[]) {
+  try {
+    const res = await fetch('/api/sql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sql, params, is_write: false })
+    });
+    const data = await res.json();
+    return data.success ? data.data : [];
+  } catch(e) { console.error(e); return []; }
+}
+
+async function exec(sql, params=[]) {
+  try {
+    const res = await fetch('/api/sql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sql, params, is_write: true })
+    });
+    const data = await res.json();
+    return data.success;
+  } catch(e) { console.error(e); return false; }
+}
+
+// ==================== UI HELPERS ====================
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  event.target.classList.add('active');
+  const hasSidebar = ['trains','zones','schedules'].includes(name);
+  document.getElementById('sidebar').style.width = hasSidebar ? '220px' : '0';
+  loadPanelData(name);
+}
+
+function showTab(panelId, tabId) {
+  const prefix = 'tab-'+panelId+'-';
+  document.querySelectorAll('[id^="'+prefix+'"]').forEach(p => p.classList.remove('active'));
+  document.getElementById(prefix+tabId).classList.add('active');
+  const btns = event.target.parentElement.querySelectorAll('.tab-btn');
+  btns.forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function toast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isError ? ' error' : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = '', 3000);
+}
+
+function genPNR() { return Math.random().toString(36).substring(2,12).toUpperCase(); }
+
+const ZONE_COLORS = {
+  CR:'#ef4444',ER:'#f97316',ECR:'#eab308',ECoR:'#84cc16',NER:'#10b981',
+  NFR:'#14b8a6',NR:'#3b82f6',NCR:'#6366f1',NWR:'#8b5cf6',SR:'#ec4899',
+  SCR:'#f43665',SER:'#fb923c',SECR:'#a3e635',WR:'#38bdf8',WCR:'#a78bfa',
+  SWR:'#fb7f44',KR:'#4ade80',Metro:'#f472b6'
+};
+
+function fmtZoneBadge(code) {
+  const c = ZONE_COLORS[code] || '#94a3b8';
+  return `<span class="badge" style="background:${c}22;color:${c};border:1px solid ${c}">${code}</span>`;
+}
+
+function fmtTypeBadge(type) {
+  const colors = {
+    'Rajdhani Express':'#ef4444','Shatabdi Express':'#f97316','Vande Bharat Express':'#8b5cf6',
+    'Duronto Express':'#3b82f6','Tejas Express':'#10b981','Humsafar Express':'#14b8a6',
+    'Garib Rath Express':'#eab308','Jan Shatabdi Express':'#84cc16',
+    'Superfast Express':'#6366f1','Express':'#94a3b8','Mail':'#fb923c',
+    'Passenger':'#64748b','MEMU':'#a3e635','EMU Local':'#38bdf8','Antyodaya Express':'#f472b6'
+  };
+  const c = colors[type] || '#94a3b8';
+  return `<span class="badge" style="background:${c}22;color:${c}">${type}</span>`;
+}
+
+// ==================== PANEL LOADERS ====================
+async function loadPanelData(name) {
+  switch(name) {
+    case 'dashboard': await loadDashboard(); break;
+    case 'zones': await loadZonesPanel(); break;
+    case 'trains': await loadTrainsPanel(); break;
+    case 'tracks': await loadTracksPanel(); break;
+    case 'schedules': await loadSchedulesPanel(); break;
+    case 'booking': await loadBookingPanel(); break;
+    case 'bookings': await loadBookingsPanel(); break;
+    case 'search': await loadSearchPanel(); break;
+  }
+}
+
+async function loadDashboard() {
+  const counts = await query(`
+    SELECT 
+      (SELECT COUNT(*) FROM zones) as totZones,
+      (SELECT COUNT(*) FROM stations) as totSt,
+      (SELECT COUNT(*) FROM trains) as totTr,
+      (SELECT COUNT(*) FROM tracks) as totTk,
+      (SELECT COUNT(*) FROM bookings) as totBk,
+      (SELECT COUNT(*) FROM schedule) as totSch
+  `);
+  if (!counts[0]) return;
+  const c = counts[0];
+
+  document.getElementById('kpiGrid').innerHTML = [
+    {label:'Railway Zones',   val:c.totZones, sub:'All Indian Zones', color:'var(--rail-saffron)'},
+    {label:'Stations',        val:c.totSt,    sub:'Across India',     color:'var(--accent3)'},
+    {label:'Trains',          val:c.totTr,    sub:'All Express & Mail',color:'var(--accent2)'},
+    {label:'Track Segments',  val:c.totTk,    sub:'Graph Edges',       color:'var(--accent4)'},
+    {label:'Schedule Entries',val:c.totSch,   sub:'Stops recorded',    color:'var(--warn)'},
+    {label:'Bookings',        val:c.totBk,    sub:'Total tickets',     color:'var(--accent)'},
+  ].map(k => `
+    <div class="kpi" style="border-left:3px solid ${k.color}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value" style="color:${k.color}">${k.val}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>
+  `).join('');
+
+  const zones = await query(`SELECT z.code,z.name,z.headquarters, COUNT(DISTINCT s.id) as stations, COUNT(DISTINCT t.id) as trains FROM zones z LEFT JOIN stations s ON s.zone_id=z.id LEFT JOIN trains t ON t.zone_id=z.id GROUP BY z.id ORDER BY z.code`);
+  document.getElementById('zoneSummaryTbl').innerHTML = zones.map(z => `<tr><td>${fmtZoneBadge(z.code)}</td><td>${z.name}</td><td>${z.stations}</td><td>${z.trains}</td></tr>`).join('');
+
+  const express = await query(`SELECT t.train_no, t.name, z.code, t.train_type FROM trains t JOIN zones z ON t.zone_id=z.id WHERE t.train_type IN ('Rajdhani Express','Vande Bharat Express','Shatabdi Express','Tejas Express') ORDER BY t.train_no LIMIT 20`);
+  document.getElementById('expressTbl').innerHTML = express.map(t => `<tr><td style="font-family:'IBM Plex Mono',monospace">${t.train_no}</td><td>${t.name}</td><td>${fmtZoneBadge(t.code)}</td><td>${fmtTypeBadge(t.train_type)}</td></tr>`).join('');
+
+  document.getElementById('headerStats').innerHTML = [{label:'Zones',val:c.totZones},{label:'Stations',val:c.totSt},{label:'Trains',val:c.totTr},{label:'Bookings',val:c.totBk}].map(s => `<div class="stat-chip"><span>${s.val}</span><span>${s.label}</span></div>`).join('');
+}
+
+async function loadZonesPanel() {
+  const zones = await query(`SELECT z.code,z.name,z.headquarters,z.abbreviation, COUNT(DISTINCT s.id) as stations, COUNT(DISTINCT t.id) as trains FROM zones z LEFT JOIN stations s ON s.zone_id=z.id LEFT JOIN trains t ON t.zone_id=z.id GROUP BY z.id ORDER BY z.code`);
+  document.getElementById('allZonesTbl').innerHTML = zones.map(z => `<tr><td>${fmtZoneBadge(z.code)}</td><td>${z.name}</td><td>${z.headquarters}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${z.abbreviation}</td><td>${z.stations}</td><td>${z.trains}</td></tr>`).join('');
+
+  const zf = document.getElementById('zoneFilter');
+  zf.innerHTML = '<option value="">All Zones</option>' + zones.map(z => `<option value="${z.code}">${z.code} - ${z.name}</option>`).join('');
+  document.getElementById('ns_zone').innerHTML = zones.map(z => `<option value="${z.code}">${z.code}</option>`).join('');
+  await filterStations();
+}
+
+async function filterStations() {
+  const q = (document.getElementById('stationSearch')?.value || '').toLowerCase();
+  const zf = document.getElementById('zoneFilter')?.value || '';
+  let sql = `SELECT s.code,s.name,s.state,z.code as zone,s.category FROM stations s JOIN zones z ON s.zone_id=z.id`;
+  if (zf) sql += ` WHERE z.code = '${zf}'`;
+  sql += ` ORDER BY z.code,s.name`;
+  const sts = await query(sql);
+  const filtered = sts.filter(s => !q || s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q));
+  document.getElementById('stationsTbl').innerHTML = filtered.map(s => `<tr><td style="font-family:'IBM Plex Mono',monospace;font-weight:600">${s.code}</td><td>${s.name}</td><td>${s.state}</td><td>${fmtZoneBadge(s.zone)}</td><td><span class="badge" style="background:var(--bg3);color:var(--text3)">${s.category}</span></td></tr>`).join('');
+}
+
+async function loadTrainsPanel() {
+  const zones = await query('SELECT code,name FROM zones ORDER BY code');
+  document.getElementById('zoneList').innerHTML = zones.map(z => `<div class="zone-item" onclick="filterZoneSidebar('${z.code}',this)"><div class="zone-dot" style="background:${ZONE_COLORS[z.code]||'#94a3b8'}"></div>${z.code}</div>`).join('');
+  ['trainZoneSelect','nt_zone'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = zones.map(z => `<option value="${z.code}">${z.code} - ${z.name}</option>`).join('');
+  });
+  await filterTrains();
+}
+
+async function filterTrains() {
+  const q = (document.getElementById('trainSearch')?.value || '').toLowerCase();
+  const trains = await query(`SELECT t.train_no,t.name,z.code as zone,t.train_type,t.total_coaches,t.origin_code,t.destination_code FROM trains t JOIN zones z ON t.zone_id=z.id ORDER BY t.train_no`);
+  const filtered = trains.filter(t => !q || t.name.toLowerCase().includes(q) || String(t.train_no).includes(q));
+  document.getElementById('trainsTbl').innerHTML = filtered.map(t => `<tr><td style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--rail-gold)">${t.train_no}</td><td>${t.name}</td><td>${fmtZoneBadge(t.zone)}</td><td>${fmtTypeBadge(t.train_type)}</td><td>${t.total_coaches}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${t.origin_code}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${t.destination_code}</td></tr>`).join('');
+}
+
+function filterZoneSidebar(code, el) {
+  document.querySelectorAll('.zone-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('trainZoneSelect').value = code;
+  loadTrainsByZone();
+  showTab('trains','by-zone');
+}
+
+async function loadTrainsByZone() {
+  const z = document.getElementById('trainZoneSelect')?.value;
+  if (!z) return;
+  const trains = await query(`SELECT t.train_no,t.name,t.train_type,t.total_coaches,t.origin_code,t.destination_code FROM trains t JOIN zones z ON t.zone_id=z.id WHERE z.code=? ORDER BY t.train_no`, [z]);
+  document.getElementById('trainsByZoneTbl').innerHTML = trains.map(t => `<tr><td style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--rail-gold)">${t.train_no}</td><td>${t.name}</td><td>${fmtTypeBadge(t.train_type)}</td><td>${t.total_coaches}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${t.origin_code} → ${t.destination_code}</td></tr>`).join('');
+}
+
+async function loadTracksPanel() {
+  const sts = await query('SELECT code,name FROM stations ORDER BY code');
+  ['trk_from','trk_to'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = sts.map(s => `<option value="${s.code}">${s.code} - ${s.name}</option>`).join('');
+  });
+  await filterTracks();
+}
+
+async function filterTracks() {
+  const q = (document.getElementById('trackSearch')?.value || '').toLowerCase();
+  const tracks = await query(`SELECT sf.code as from_code, sf.name as from_name, st.code as to_code, st.name as to_name, t.distance_km, t.line_type, t.electrified FROM tracks t JOIN stations sf ON t.station_from_id=sf.id JOIN stations st ON t.station_to_id=st.id WHERE sf.id < st.id ORDER BY sf.code`);
+  const filtered = tracks.filter(t => !q || t.from_name.toLowerCase().includes(q) || t.to_name.toLowerCase().includes(q) || t.from_code.toLowerCase().includes(q) || t.to_code.toLowerCase().includes(q));
+  document.getElementById('tracksTbl').innerHTML = filtered.map(t => `<tr><td>${t.from_name} <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3)">(${t.from_code})</span></td><td>${t.to_name} <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3)">(${t.to_code})</span></td><td>${t.distance_km} km</td><td>${t.line_type}</td><td>${t.electrified ? '<span style="color:var(--accent3)">✓ Yes</span>' : '<span style="color:var(--danger)">✗ No</span>'}</td></tr>`).join('');
+}
+
+async function loadSchedulesPanel() {
+  const trains = await query('SELECT id,train_no,name FROM trains ORDER BY train_no');
+  ['schedTrainSelect','stop_train'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = trains.map(t => `<option value="${t.id}">${t.train_no} - ${t.name}</option>`).join('');
+  });
+  const sts = await query('SELECT id,code,name FROM stations ORDER BY name');
+  const ss = document.getElementById('stop_station');
+  if (ss) ss.innerHTML = sts.map(s => `<option value="${s.id}">${s.code} - ${s.name}</option>`).join('');
+  await loadSchedule();
+}
+
+async function loadSchedule() {
+  const tid = document.getElementById('schedTrainSelect')?.value;
+  if (!tid) return;
+  const sched = await query(`SELECT sc.sequence_no, s.code, s.name, sc.arrival_time, sc.departure_time, sc.day_no, sc.halt_minutes FROM schedule sc JOIN stations s ON sc.station_id=s.id WHERE sc.train_id=? ORDER BY sc.sequence_no`, [tid]);
+  const trainRes = await query('SELECT train_no,name,origin_code,destination_code,train_type FROM trains WHERE id=?', [tid]);
+  const train = trainRes[0];
+  if (!train) return;
+  let html = `<div class="card"><div class="card-title">${fmtTypeBadge(train.train_type)} ${train.train_no} — ${train.name}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:12px">${train.origin_code} → ${train.destination_code}</div>`;
+  if (sched.length === 0) { html += `<div style="color:var(--text3);padding:20px;text-align:center">No schedule data. Add stops using the "Add Stop" tab.</div>`; }
+  else { html += `<div class="tbl-wrap"><table><thead><tr><th>#</th><th>Station Code</th><th>Station Name</th><th>Arrival</th><th>Departure</th><th>Day</th><th>Halt (min)</th></tr></thead><tbody>${sched.map((s,i) => `<tr><td>${s.sequence_no}</td><td style="font-family:'IBM Plex Mono',monospace;font-weight:700;color:${i===0?'var(--accent3)':i===sched.length-1?'var(--danger)':'var(--rail-gold)'}">${s.code}</td><td>${s.name}</td><td style="font-family:'IBM Plex Mono',monospace">${s.arrival_time}</td><td style="font-family:'IBM Plex Mono',monospace">${s.departure_time}</td><td>${s.day_no}</td><td>${s.halt_minutes > 0 ? s.halt_minutes+' min' : '—'}</td></tr>`).join('')}</tbody></table></div>`; }
+  html += '</div>';
+  document.getElementById('scheduleDisplay').innerHTML = html;
+}
+
+async function loadBookingPanel() {
+  const sts = await query('SELECT id,code,name FROM stations ORDER BY name');
+  ['bk_from','bk_to','sr_from','sr_to'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = sts.map(s => `<option value="${s.id}">${s.code} - ${s.name}</option>`).join('');
+  });
+  document.getElementById('bk_date').min = new Date().toISOString().split('T')[0];
+  document.getElementById('bk_date').value = new Date().toISOString().split('T')[0];
+}
+
+async function loadBookingsPanel() { await filterBookings(); }
+
+async function filterBookings() {
+  const q = (document.getElementById('bookingSearch')?.value || '').toLowerCase();
+  const bookings = await query(`SELECT b.pnr, b.journey_date, b.coach, b.seat_no, b.passenger_name, b.booked_at, t.train_no, t.name as train_name, sf.name as from_name, sf.code as from_code, st.name as to_name, st.code as to_code FROM bookings b JOIN trains t ON b.train_id=t.id JOIN stations sf ON b.from_station_id=sf.id JOIN stations st ON b.to_station_id=st.id ORDER BY b.id DESC`);
+  const filtered = bookings.filter(b => !q || b.pnr.toLowerCase().includes(q) || b.passenger_name.toLowerCase().includes(q) || String(b.train_no).includes(q) || b.train_name.toLowerCase().includes(q));
+  if (filtered.length === 0) { document.getElementById('bookingsList').innerHTML = `<div style="text-align:center;padding:60px;color:var(--text3)"><div style="font-size:48px;margin-bottom:10px">🎫</div><div style="font-family:'Rajdhani',sans-serif;font-size:18px">No bookings found</div><div>Use the "Book Ticket" tab to make a reservation</div></div>`; return; }
+  document.getElementById('bookingsList').innerHTML = filtered.map(b => `<div class="ticket"><div class="ticket-header"><div><div class="ticket-train">${b.train_no} — ${b.train_name}</div><div class="ticket-id">PNR: <span style="color:var(--rail-gold);letter-spacing:2px">${b.pnr}</span></div></div><div style="text-align:right"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text3)">${b.journey_date}</div><div style="font-size:11px;color:var(--text3)">${b.booked_at ? b.booked_at.substring(0,16) : ''}</div></div></div><div class="ticket-route"><span class="ticket-station" style="color:var(--accent3)">${b.from_name} (${b.from_code})</span><span class="ticket-arrow">→</span><span class="ticket-station" style="color:var(--danger)">${b.to_name} (${b.to_code})</span></div><div class="ticket-details"><div class="ticket-detail"><span>Passenger</span><span>${b.passenger_name}</span></div><div class="ticket-detail"><span>Coach</span><span>${b.coach}</span></div><div class="ticket-detail"><span>Seat</span><span>${b.seat_no}</span></div><div class="ticket-detail"><span>Date</span><span>${b.journey_date}</span></div></div></div>`).join('');
+}
+
+async function loadSearchPanel() {
+  const sts = await query('SELECT id,code,name FROM stations ORDER BY name');
+  ['sr_from','sr_to'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = sts.map(s => `<option value="${s.id}">${s.code} - ${s.name}</option>`).join('');
+  });
+}
+
+// ==================== ACTIONS ====================
+async function addStation() {
+  const code = document.getElementById('ns_code').value.trim().toUpperCase();
+  const name = document.getElementById('ns_name').value.trim();
+  const state = document.getElementById('ns_state').value.trim();
+  const zone = document.getElementById('ns_zone').value;
+  const cat = document.getElementById('ns_cat').value;
+  if (!code || !name) { toast('Station code and name required', true); return; }
+  const ok = await exec(`INSERT INTO stations(code,name,state,zone_id,category) VALUES(?,?,?,(SELECT id FROM zones WHERE code=?),?)`, [code,name,state,zone,cat]);
+  if (ok) { toast('Station '+code+' added!'); await loadZonesPanel(); } else toast('Error: Station code may already exist', true);
+}
+
+async function addTrain() {
+  const no = parseInt(document.getElementById('nt_no').value);
+  const name = document.getElementById('nt_name').value.trim();
+  const zone = document.getElementById('nt_zone').value;
+  const type = document.getElementById('nt_type').value;
+  const coaches = parseInt(document.getElementById('nt_coaches').value) || 24;
+  const orig = document.getElementById('nt_origin').value.trim().toUpperCase();
+  const dest = document.getElementById('nt_dest').value.trim().toUpperCase();
+  if (!no || !name) { toast('Train number and name required', true); return; }
+  const ok = await exec(`INSERT INTO trains(train_no,name,zone_id,train_type,total_coaches,origin_code,destination_code) VALUES(?,?,(SELECT id FROM zones WHERE code=?),?,?,?,?)`, [no,name,zone,type,coaches,orig,dest]);
+  if (ok) { toast('Train '+no+' added!'); await loadTrainsPanel(); } else toast('Error: Train number may already exist', true);
+}
+
+async function addTrack() {
+  const from = document.getElementById('trk_from').value;
+  const to = document.getElementById('trk_to').value;
+  const dist = parseFloat(document.getElementById('trk_dist').value) || 0;
+  const line = document.getElementById('trk_line').value;
+  const elec = parseInt(document.getElementById('trk_elec').value);
+  if (from === to) { toast('From and To cannot be same station', true); return; }
+  const ok = await exec(`INSERT OR IGNORE INTO tracks(station_from_id,station_to_id,distance_km,line_type,electrified) VALUES(?,?,?,?,?)`, [from,to,dist,line,elec]);
+  if (ok) { toast('Track added!'); await loadTracksPanel(); } else toast('Error adding track', true);
+}
+
+async function addStop() {
+  const tid = document.getElementById('stop_train').value;
+  const sid = document.getElementById('stop_station').value;
+  const seq = parseInt(document.getElementById('stop_seq').value) || 1;
+  const arr = document.getElementById('stop_arr').value || '00:00';
+  const dep = document.getElementById('stop_dep').value || arr;
+  const day = parseInt(document.getElementById('stop_day').value) || 1;
+  const halt = parseInt(document.getElementById('stop_halt').value) || 0;
+  if (!tid || !sid) { toast('Train and station required', true); return; }
+  const ok = await exec(`INSERT INTO schedule(train_id,station_id,sequence_no,arrival_time,departure_time,day_no,halt_minutes) VALUES(?,?,?,?,?,?,?)`, [tid,sid,seq,arr,dep,day,halt]);
+  if (ok) { toast('Stop added to schedule!'); await loadSchedule(); } else toast('Error adding stop', true);
+}
+
+async function searchTrainsForRoute() {
+  const fid = document.getElementById('bk_from').value;
+  const tid = document.getElementById('bk_to').value;
+  const trains = await query(`SELECT DISTINCT t.id, t.train_no, t.name, t.train_type FROM trains t JOIN schedule sf ON sf.train_id=t.id AND sf.station_id=? JOIN schedule st ON st.train_id=t.id AND st.station_id=? WHERE sf.sequence_no < st.sequence_no`, [fid,tid]);
+  const byRoute = await query(`SELECT t.id, t.train_no, t.name, t.train_type FROM trains t JOIN stations sf ON sf.id=? AND sf.code=t.origin_code JOIN stations st ON st.id=? AND st.code=t.destination_code`, [fid,tid]);
+  const allTrains = await query('SELECT id,train_no,name FROM trains ORDER BY train_no');
+  const bkTrain = document.getElementById('bk_train');
+  if (trains.length > 0 || byRoute.length > 0) {
+    const combined = [...trains, ...byRoute.filter(b => !trains.find(t=>t.id===b.id))];
+    bkTrain.innerHTML = combined.map(t => `<option value="${t.id}">${t.train_no} - ${t.name}</option>`).join('');
+    toast(`Found ${combined.length} train(s) for this route!`);
+  } else {
+    bkTrain.innerHTML = allTrains.map(t => `<option value="${t.id}">${t.train_no} - ${t.name}</option>`).join('');
+    toast('No direct schedule match. Showing all trains.', true);
+  }
+}
+
+async function bookTicket() {
+  const fid = document.getElementById('bk_from').value;
+  const tid2 = document.getElementById('bk_to').value;
+  const date = document.getElementById('bk_date').value;
+  const trainId = document.getElementById('bk_train').value;
+  const coach = document.getElementById('bk_coach').value;
+  const seat = parseInt(document.getElementById('bk_seat').value) || Math.floor(Math.random()*72)+1;
+  const name = document.getElementById('bk_name').value.trim();
+  if (!name || !date || !trainId) { toast('Please fill all fields', true); return; }
+  if (fid === tid2) { toast('From and To cannot be same', true); return; }
+  const pnr = genPNR();
+  const ok = await exec(`INSERT INTO bookings(pnr,train_id,journey_date,from_station_id,to_station_id,coach,seat_no,passenger_name) VALUES(?,?,?,?,?,?,?,?)`, [pnr,trainId,date,fid,tid2,coach,seat,name]);
+  if (ok) { toast('🎫 Booking confirmed! PNR: '+pnr); await loadBookingsPanel(); } else toast('Error making booking', true);
+}
+
+async function clearAllBookings() {
+  if (!confirm('Clear ALL bookings?')) return;
+  await exec('DELETE FROM bookings');
+  await loadBookingsPanel();
+  toast('All bookings cleared');
+}
+
+async function searchTrains() {
+  const fid = document.getElementById('sr_from').value;
+  const tid = document.getElementById('sr_to').value;
+  const trains = await query(`SELECT DISTINCT t.train_no, t.name, t.train_type, z.code as zone, t.origin_code, t.destination_code, t.total_coaches, sf.departure_time as dep_time, st.arrival_time as arr_time FROM trains t JOIN zones z ON t.zone_id=z.id JOIN schedule sf ON sf.train_id=t.id AND sf.station_id=? JOIN schedule st ON st.train_id=t.id AND st.station_id=? WHERE sf.sequence_no < st.sequence_no ORDER BY sf.departure_time`, [fid,tid]);
+  const allRoute = await query(`SELECT t.train_no,t.name,t.train_type,z.code as zone,t.origin_code,t.destination_code,t.total_coaches FROM trains t JOIN zones z ON t.zone_id=z.id JOIN stations sf ON sf.id=? AND sf.code=t.origin_code JOIN stations st ON st.id=? AND st.code=t.destination_code`, [fid,tid]);
+  const combined = [...trains, ...allRoute.filter(r => !trains.find(t=>t.train_no===r.train_no))];
+  if (combined.length === 0) { document.getElementById('searchResults').innerHTML = `<div style="text-align:center;padding:40px;color:var(--text3)">No direct trains found for this route.</div>`; return; }
+  document.getElementById('searchResults').innerHTML = `<div style="font-family:'Rajdhani',sans-serif;font-size:15px;color:var(--text3);margin-bottom:12px">Found ${combined.length} train(s)</div><div class="tbl-wrap"><table><thead><tr><th>Train No</th><th>Name</th><th>Type</th><th>Zone</th><th>Departs</th><th>Arrives</th><th>Coaches</th></tr></thead><tbody>${combined.map(t => `<tr><td style="font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--rail-gold)">${t.train_no}</td><td>${t.name}</td><td>${fmtTypeBadge(t.train_type)}</td><td>${fmtZoneBadge(t.zone)}</td><td style="font-family:'IBM Plex Mono',monospace">${t.dep_time||'—'}</td><td style="font-family:'IBM Plex Mono',monospace">${t.arr_time||'—'}</td><td>${t.total_coaches}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+async function runSQL() {
+  const sql = document.getElementById('sqlInput').value.trim();
+  if (!sql) return;
+  try {
+    const isWrite = /^(insert|update|delete|drop|create|alter)/i.test(sql);
+    const res = await fetch('/api/sql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sql, params: [], is_write: isWrite })
+    });
+    const data = await res.json();
+    if (!data.success) { document.getElementById('sqlOutput').textContent = '✗ ERROR: ' + data.error; return; }
+    if (isWrite || !data.data || data.data.length === 0) { document.getElementById('sqlOutput').textContent = '✓ Query executed successfully. No rows to display.'; return; }
+    const rows = data.data;
+    const columns = Object.keys(rows[0]);
+    let out = columns.join(' | ') + '\n';
+    out += columns.map(c => '-'.repeat(c.length+2)).join('-') + '\n';
+    rows.slice(0,100).forEach(row => { out += columns.map(c => row[c] === null ? 'NULL' : String(row[c])).join(' | ') + '\n'; });
+    if (rows.length > 100) out += `\n... and ${rows.length-100} more rows`;
+    document.getElementById('sqlOutput').textContent = out;
+  } catch(e) { document.getElementById('sqlOutput').textContent = '✗ ERROR: ' + e.message; }
+}
+
+function sqlPreset(q) { document.getElementById('sqlInput').value = q; runSQL(); }
+
+// ==================== STARTUP ====================
+window.addEventListener('load', async () => {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  await loadDashboard();
+});
+</script>
+</body>
+</html>
